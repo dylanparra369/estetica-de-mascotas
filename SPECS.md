@@ -1,154 +1,108 @@
-# Specs técnicos
+# Especificación del MVP
 
-**Proyecto:** Consentimiento Informado Digital para Mascotas
+## 1. Para qué sirve este documento
 
-**Estado:** borrador para validación
+Este documento describe, en lenguaje directo, qué vamos a construir primero y cómo lo vamos a comprobar. Es la referencia de trabajo para el MVP; no es un diseño legal ni una decisión sobre el proveedor final de alojamiento.
 
-## 0. Cómo usar este documento
+## 2. Objetivo
 
-Este documento complementa a `FICHA-TECNICA.md`. **No repite** lo que ya está allí: alcance MoSCoW (§4), requisitos RF-01 a RF-09 (§7), requisitos no funcionales (§8), stack base (§11), entidades (§12), roles (§13) y criterios de MVP terminado (§15). Aquí solo se agrega lo que la ficha no define. Las referencias `§N` apuntan a la ficha.
+Crear una aplicación web sencilla para que un cliente registre sus datos y los de su mascota, lea y acepte el consentimiento informado, firme en pantalla y deje un registro que Pilar pueda consultar.
 
-**Vacío:** solo se analizó la ficha. No se recibieron la propuesta, la presentación del MVP ni el `README.md`. Si contradicen algo de aquí, hay que ajustar.
+## 3. Qué incluye la primera versión
 
----
+### Cliente
 
-## 1. Propuesta para las decisiones pendientes (§14)
+1. Abre el formulario desde un enlace o un código QR.
+2. Completa sus datos y los de la mascota.
+3. Lee el texto completo del consentimiento.
+4. Marca su aceptación y firma en la pantalla del celular o la tablet.
+5. Envía el formulario y recibe una confirmación.
 
-Son recomendaciones, no decisiones tomadas. Cada una debe confirmarse con Pilar y reflejarse en la ficha.
+### Pilar
 
-| # | Pendiente de la ficha | Propuesta más simple |
-|---|---|---|
-| 1 | Firma por servicio o una vez por mascota | Una firma por visita. Es la más defendible y no exige reconocer clientes recurrentes. |
-| 2 | Quién redacta y valida el texto | Un abogado o asesor lo valida antes del piloto. Es bloqueante. |
-| 3 | País y normativa | Sin definir. Se asume Colombia (Ley 527 de 1999, Ley 1581 de 2012). **Suposición a confirmar.** |
-| 4 | Datos exactos a pedir | Los campos de §12, todos obligatorios salvo correo y raza. |
-| 5 | Identificar al mismo dueño o mascota | Dueño por número de documento. Mascota asociada al dueño y comparada por nombre. |
-| 6 | Menores o terceros | Solo firman mayores de edad, con casilla: "Soy mayor de edad y responsable de la mascota". |
-| 7 | ¿Los Should en el primer uso? | No. Quedan en v2, coherente con §10 y §15. |
-| 8 | Conservación | Sin borrar nada hasta que la asesoría legal defina un plazo. |
-| 9 | Corregir un error tras firmar | El registro no se edita. Se crea un nuevo consentimiento y el original queda intacto. |
+1. Inicia sesión.
+2. Ve la lista de consentimientos recibidos.
+3. Abre un registro y consulta los datos, el texto aceptado, la firma y la fecha y hora de envío.
+4. Puede imprimir o guardar la página desde el navegador si necesita una copia.
 
-**Observación:** RF-06 (consultar cualquier consentimiento) y RF-07 (historial por mascota) se solapan. En el MVP, RF-06 se cubre con una lista cronológica.
+## 4. Qué dejamos para después
 
----
+No construir en esta etapa:
 
-## 2. Ajustes al stack (§11)
+- Exportación automática a PDF.
+- Búsqueda avanzada e historial separado por mascota.
+- Fotos, datos médicos, alergias o envío por WhatsApp/correo.
+- Agenda, pagos, inventario, varias sucursales o aplicación móvil.
+- Microservicios, blockchain u otros mecanismos que no sean necesarios para el flujo básico.
 
-El stack de la ficha se mantiene. Solo se concretan estas decisiones:
+## 5. Reglas que debe cumplir el MVP
 
-| Tema | Decisión | Justificación |
-|---|---|---|
-| Autenticación | Supabase Auth (de las dos opciones de §11) | Un solo proveedor para datos y login. |
-| Estilos | Tailwind CSS (**adición propia**) | Diseño responsivo sin escribir CSS desde cero. |
-| Backend | Server Actions y Route Handlers de Next.js | Sin servidor aparte. |
-| Algoritmo de hash | SHA-256 (**suposición**, la ficha no lo especifica) | Estándar, disponible en Node sin dependencias. |
-| QR | Librería `qrcode` | Cumple "sin dependencias externas". |
+- El formulario debe funcionar en celular, tablet y computador.
+- No se puede enviar si faltan datos obligatorios, no se aceptó el consentimiento o la firma está vacía.
+- La fecha y hora de recepción las genera el servidor, no el dispositivo del cliente.
+- Solo una persona autenticada y autorizada puede consultar los registros.
+- El cliente no puede ver registros de otras personas.
+- El registro enviado no se modifica desde la aplicación. Si hay un error, Pilar conserva el original y solicita un nuevo envío; cualquier corrección administrativa debe definirse antes de implementarse.
+- El consentimiento debe guardar la versión exacta del texto que el cliente aceptó.
+- El QR abre el mismo formulario público que el enlace directo.
 
-**Costo:** $0 en planes gratuitos, más dominio opcional. Verificar antes del piloto las condiciones vigentes de Supabase y Vercel (por ejemplo, pausa de proyectos inactivos).
+## 6. Herramientas para empezar
 
----
+Usaremos software de código abierto y mantendremos la aplicación independiente de un proveedor de alojamiento:
 
-## 3. Arquitectura
-
-**Estilo:** monolito web. Una aplicación Next.js en Vercel conectada a Supabase. Sin microservicios ni API pública separada.
-
-```
-Cliente (celular/tablet)          Pilar (computador)
-        │                                 │
-        └──────────► Next.js (Vercel) ◄───┘
-                     ├─ Páginas (UI)
-                     └─ Lógica de servidor
-                              │
-                              ▼
-                     Supabase (PostgreSQL + Auth)
-```
-
-### Decisiones de arquitectura
-
-1. **El navegador nunca escribe directo en la base de datos.** Todo pasa por el servidor, que valida con Zod y guarda.
-2. **El servidor genera fecha, hora y hashes.** El cliente no puede enviarlos.
-3. **La inmutabilidad se impone en la base de datos**, no solo en la interfaz: las tablas de consentimientos y firmas no permiten actualizar ni borrar.
-4. **QR estático.** Apunta a una URL fija (`/consentimiento`). Se genera una vez y se imprime.
-5. **Dos hashes:** uno sobre el contenido del consentimiento y otro sobre la imagen de la firma.
-6. **Versiones del texto inmutables.** Un cambio crea una versión nueva; cada consentimiento referencia la versión exacta que vio el cliente.
-7. **Guardado atómico.** Dueño, mascotas, consentimiento y firma se guardan en una sola operación. Si algo falla, no queda nada parcial.
-8. **El texto legal se carga por script o panel de Supabase.** No hay pantalla de administración del texto en el MVP.
-
----
-
-## 4. Rutas
-
-| Ruta | Acceso | Función |
-|---|---|---|
-| `/consentimiento` | Público (destino del QR) | Formulario del cliente |
-| `/consentimiento/confirmacion` | Público | Confirmación de envío |
-| `/admin/login` | Público | Inicio de sesión de Pilar |
-| `/admin/consentimientos` | Solo Pilar | Lista cronológica |
-| `/admin/consentimientos/[id]` | Solo Pilar | Detalle de la evidencia |
-| `/admin/qr` | Solo Pilar | Ver o descargar el QR |
-
-## 5. Estructura de carpetas (orientativa)
-
-```
-/
-├─ app/
-│  ├─ consentimiento/
-│  └─ admin/
-├─ components/
-├─ lib/            (validaciones, hashes, acceso a datos)
-├─ supabase/       (migraciones y reglas de seguridad)
-├─ tests/          (unitarias y e2e)
-├─ docs/           (ficha y specs)
-└─ .env.local      (secretos, fuera de Git)
-```
-
----
-
-## 6. Criterios de aceptación por requisito
-
-| ID | Criterio verificable |
+| Necesidad | Herramienta inicial |
 |---|---|
-| RF-01 | Los campos obligatorios se validan antes del envío. No se avanza con datos incompletos. Se permiten una o más mascotas. |
-| RF-02 | La casilla de aceptación y la firma se habilitan solo después de mostrar el texto completo. |
-| RF-03 | La firma se dibuja con dedo o mouse. No se acepta en blanco. |
-| RF-04 | La marca la asigna el servidor. Ningún campo del formulario permite enviarla o modificarla. |
-| RF-05 | Al escanear el QR con la cámara estándar se abre el formulario, sin apps adicionales. |
-| RF-06 | Con sesión, Pilar ve lista y detalle. Sin sesión, se redirige al login y no se expone ningún dato. |
+| Interfaz web | Next.js, React y TypeScript |
+| API/backend | Nest.js y TypeScript |
+| Estilos | Tailwind CSS |
+| Base de datos | PostgreSQL local con Docker |
+| Acceso a datos y migraciones | Prisma |
+| Autenticación | Sesión protegida implementada en la API Nest.js |
+| Validación de formularios | Zod |
+| Firma en pantalla | `signature_pad` |
+| Código QR | `qrcode` |
+| Pruebas | Vitest para lógica y Playwright para el flujo web |
+| Control de cambios | Git; el repositorio remoto actual está en GitHub |
 
-### Requisitos complementarios (derivados de la ficha, no nuevos)
+Next.js, Nest.js, React, TypeScript, Tailwind CSS, PostgreSQL, Prisma, Zod, `signature_pad`, `qrcode`, Vitest, Playwright y Git son proyectos de código abierto. GitHub es el servicio de alojamiento del repositorio actual, no una herramienta de código abierto ni una dependencia de la aplicación. Que el software sea abierto no significa que cualquier servicio alojado, plan o despliegue sea gratuito o abierto. Para desarrollo, PostgreSQL se ejecutará localmente con Docker. Antes de publicar la aplicación se elegirá el alojamiento, comparando costo, mantenimiento, copias de seguridad y privacidad.
 
-- **RF-10.** Mostrar confirmación al cliente tras un envío exitoso (flujo §6).
-- **RF-11.** Autenticar a Pilar con correo y contraseña (flujo §6).
-- **RF-12.** Guardado atómico, sin registros parciales (decisión de arquitectura 7).
+## 7. Organización técnica
 
----
+- Mantener un repositorio único con dos aplicaciones: `web` (Next.js) y `api` (Nest.js), más PostgreSQL. No crear microservicios.
+- Next.js se comunica con Nest.js; el navegador no se conecta directamente a PostgreSQL.
+- Separar páginas, componentes de interfaz, módulos de negocio y acceso a datos para no mezclar responsabilidades.
+- Validar los datos en la API aunque también se validen en el formulario.
+- Guardar el consentimiento, la firma y su fecha de recepción como un solo envío; un fallo no debe dejar un registro incompleto.
+- Mantener las claves y contraseñas fuera del repositorio, en variables de entorno.
+- Aplicar controles de acceso en la API y en la base de datos. Ocultar una pantalla en la interfaz no es suficiente para proteger los registros.
+- Cada envío del MVP se asocia a una mascota y a una visita; si el cliente trae varias, firma un envío por cada una.
+- El responsable puede tener rol `CLIENTE` sin cuenta de acceso; Pilar usa rol `ADMIN` para consultar la evidencia.
 
-## 7. Herramientas y dependencias
+## 8. Orden de trabajo
 
-**Entorno:** Node.js (LTS) y npm · Git y GitHub · editor con asistente de IA · cuentas gratuitas de GitHub, Vercel y Supabase · un celular y una tablet reales para pruebas (exigido en §15).
+1. **Preparar el proyecto:** configurar Next.js, Nest.js, TypeScript, Tailwind, pruebas y PostgreSQL local con Prisma.
+2. **Construir el formulario:** campos del cliente y mascota, lectura del texto y firma desde celular y computador.
+3. **Guardar y confirmar:** validar en el servidor, guardar el envío completo con fecha y hora y mostrar confirmación.
+4. **Construir la consulta de Pilar:** inicio de sesión, lista y detalle protegidos.
+5. **Probar y preparar el piloto:** probar el QR y el flujo completo en dispositivos reales; elegir alojamiento y configurar copias de seguridad.
 
-**Paquetes:**
+## 9. Cómo sabremos que el MVP está listo
 
-| Propósito | Paquete |
-|---|---|
-| Framework | `next`, `react`, `react-dom`, `typescript` |
-| Estilos | `tailwindcss` |
-| Base de datos y auth | `@supabase/supabase-js`, `@supabase/ssr` |
-| Firma | `signature_pad` |
-| Validación | `zod` |
-| QR | `qrcode` |
-| PDF (v2) | `pdf-lib` |
-| Pruebas | `vitest`, `@playwright/test` |
+- Un cliente puede completar y enviar el formulario desde un celular y desde una tablet.
+- El sistema rechaza campos obligatorios vacíos, aceptación ausente y firma vacía.
+- Tras enviar, aparece una confirmación y el registro completo aparece en la lista de Pilar.
+- La vista de detalle muestra el texto aceptado, la firma y la fecha y hora asignadas por el servidor.
+- Una persona sin sesión no puede acceder a la lista ni al detalle, incluso si conoce la dirección de la página.
+- El QR abre el formulario sin requerir una aplicación especial.
+- Las pruebas cubren validación, envío exitoso, envío rechazado y acceso no autorizado.
 
----
+La arquitectura detallada, las rutas previstas y el modelo inicial están en [FICHA-TECNICA.md](./FICHA-TECNICA.md).
 
-## 8. Riesgos
+## 10. Pendiente antes de usarlo con clientes
 
-| Riesgo | Mitigación |
-|---|---|
-| Texto legal sin validar | Asesoría legal antes del piloto (bloqueante). |
-| Normativa sin definir | Confirmar país y normas aplicables. |
-| Límites del plan gratuito | Revisar condiciones y definir un respaldo propio antes del piloto. |
-| Envíos falsos o spam en el formulario público | Validación estricta en servidor. Si aparece el problema, agregar un control antiabuso simple (recomendación, no está en la ficha). |
-| Equipo principiante | Mantener el alcance en los Must y no adelantar funcionalidades. |
-| Validez legal del no repudio | La evidencia técnica fortalece la prueba, pero su validez depende de la normativa y del texto validado. |
+- Confirmar el país y las normas de privacidad y firma aplicables.
+- Obtener revisión legal del texto del consentimiento y del modo de aceptación.
+- Definir qué datos son obligatorios, cuánto tiempo se conservan y cómo se atienden solicitudes de corrección o eliminación.
+- Elegir el alojamiento de producción y verificar quién puede acceder a los datos, dónde se almacenan y cómo se respaldan.
+
+Hasta resolver estos puntos, el sistema es un prototipo de desarrollo. Un consentimiento guardado constituye evidencia del proceso, pero no debe presentarse como garantía de validez legal ni como exoneración automática de responsabilidad.

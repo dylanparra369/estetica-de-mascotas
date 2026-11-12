@@ -1,0 +1,378 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
+    <title>Modelo ER del MVP | Consentimiento digital para mascotas</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+        color: #172033;
+        background: #f4f7fb;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 32px 16px 48px;
+      }
+
+      main {
+        width: min(1120px, 100%);
+        margin: 0 auto;
+      }
+
+      h1,
+      h2,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 8px;
+        color: #14213d;
+        font-size: clamp(1.7rem, 4vw, 2.4rem);
+      }
+
+      h2 {
+        margin-bottom: 12px;
+        color: #14213d;
+        font-size: 1.15rem;
+      }
+
+      p,
+      li {
+        line-height: 1.6;
+      }
+
+      .intro {
+        max-width: 820px;
+        margin-bottom: 24px;
+        color: #42516a;
+      }
+
+      .panel {
+        margin-top: 18px;
+        padding: 20px;
+        border: 1px solid #d5deeb;
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgb(20 33 61 / 5%);
+      }
+
+      #diagram {
+        min-height: 240px;
+        overflow-x: auto;
+        padding: 12px 0;
+        text-align: center;
+      }
+
+      #diagram svg {
+        max-width: 100%;
+        height: auto;
+      }
+
+      #diagram svg .node > g.outer-path > path:first-child {
+        fill: #fff !important;
+      }
+
+      #diagram svg .node > g.label.name,
+      #diagram svg .node > g.label.name * {
+        color: #1e3a8a !important;
+        fill: #1e3a8a !important;
+        font-size: 12px !important;
+        font-weight: 700 !important;
+      }
+
+      #diagram svg .node > g.label:not(.name),
+      #diagram svg .node > g.label:not(.name) * {
+        color: #172033 !important;
+        fill: #172033 !important;
+      }
+
+      #diagram svg .edgeLabel,
+      #diagram svg .edgeLabel p {
+        color: #172033 !important;
+      }
+
+      #diagram svg .labelBkg {
+        background-color: #eff6ff !important;
+      }
+
+      #diagram svg .row-rect-odd rect,
+      #diagram svg .row-rect-odd path {
+        fill: #fff !important;
+      }
+
+      #diagram svg .row-rect-even rect,
+      #diagram svg .row-rect-even path {
+        fill: #eff6ff !important;
+      }
+
+      #diagram-error {
+        display: none;
+        color: #9b1c1c;
+      }
+
+      .columns {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 16px;
+      }
+
+      ul {
+        margin-bottom: 0;
+        padding-left: 22px;
+      }
+
+      li + li {
+        margin-top: 6px;
+      }
+
+      .note {
+        padding: 12px 14px;
+        border-left: 4px solid #1d4ed8;
+        border-radius: 4px;
+        background: #eff6ff;
+        color: #1e3a5f;
+      }
+
+      details {
+        margin-top: 14px;
+      }
+
+      summary {
+        color: #1e3a8a;
+        cursor: pointer;
+        font-weight: 650;
+      }
+
+      pre {
+        overflow-x: auto;
+        padding: 14px;
+        border-radius: 8px;
+        background: #0f172a;
+        color: #f8fafc;
+        font-size: 0.875rem;
+        line-height: 1.5;
+      }
+
+      .disclaimer {
+        color: #5b6472;
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <h1>Modelo entidad-relación del MVP</h1>
+        <p class="intro">
+          Consentimiento informado digital para la estética de mascotas. Este modelo mantiene el alcance
+          inicial pequeño: un cliente registra una mascota y firma un consentimiento para esa mascota.
+          Si trae tres mascotas, completa tres envíos.
+        </p>
+      </header>
+
+      <section class="panel" aria-labelledby="diagram-title">
+        <h2 id="diagram-title">Diagrama ER</h2>
+        <div id="diagram" role="img" aria-label="Diagrama entidad-relación de cuatro tablas para usuarios con roles, mascotas, versiones de consentimiento y consentimientos."></div>
+        <p id="diagram-error" role="status">
+          No se pudo cargar el diagrama. Se necesita conexión a internet para cargar Mermaid; el modelo
+          también está disponible como código debajo.
+        </p>
+        <details>
+          <summary>Ver el modelo como código Mermaid</summary>
+          <pre><code>erDiagram
+  usuario ||--o{ mascota : registra
+  mascota ||--o{ consentimiento : identifica
+  version_consentimiento ||--o{ consentimiento : texto_aceptado
+
+  usuario {
+    UUID id PK
+    VARCHAR nombre_completo
+    VARCHAR telefono
+    VARCHAR correo
+    VARCHAR rol
+    TEXT contrasena_hash
+    BOOLEAN activo
+    TIMESTAMPTZ creado_en
+  }
+  mascota {
+    UUID id PK
+    UUID usuario_id FK
+    VARCHAR nombre
+    VARCHAR especie
+    VARCHAR raza
+    SMALLINT edad_aproximada_meses
+    TIMESTAMPTZ creado_en
+  }
+  version_consentimiento {
+    UUID id PK
+    INTEGER numero UK
+    TEXT texto
+    BOOLEAN vigente
+    TIMESTAMPTZ publicado_en
+  }
+  consentimiento {
+    UUID id PK
+    UUID mascota_id FK
+    UUID version_id FK
+    VARCHAR responsable_firmante_snapshot
+    VARCHAR telefono_firmante_snapshot
+    VARCHAR correo_firmante_snapshot
+    VARCHAR mascota_nombre_snapshot
+    VARCHAR mascota_especie_snapshot
+    VARCHAR mascota_raza_snapshot
+    BOOLEAN acepta_consentimiento
+    BYTEA firma_imagen
+    TIMESTAMPTZ firmado_en
+  }</code></pre>
+        </details>
+      </section>
+
+      <div class="columns">
+        <section class="panel" aria-labelledby="tables-title">
+          <h2 id="tables-title">Por qué están estas tablas</h2>
+          <ul>
+            <li><strong>usuario:</strong> representa a la persona, sea cliente dueño (<code>CLIENTE</code>) o Pilar (<code>ADMIN</code>). El rol es un atributo: no se duplica la persona en una tabla de dueños y otra de administradores.</li>
+            <li><strong>Acceso:</strong> solo Pilar inicia sesión en el MVP. El cliente se registra en el envío público, pero no recibe cuenta ni contraseña; <code>contrasena_hash</code> solo aplica al usuario administrador.</li>
+            <li><strong>mascota:</strong> cada mascota apunta al usuario dueño. Un dueño puede registrar varias mascotas. Raza y edad aproximada pueden ser opcionales.</li>
+            <li><strong>version_consentimiento:</strong> conserva el texto publicado que se presentó para firmar.</li>
+            <li><strong>consentimiento:</strong> representa un envío firmado para una mascota. El cliente firmante se obtiene desde la mascota y su usuario dueño, evitando guardar dos referencias que pudieran apuntar a personas distintas.</li>
+          </ul>
+        </section>
+
+        <section class="panel" aria-labelledby="decisions-title">
+          <h2 id="decisions-title">Decisiones y límites del MVP</h2>
+          <ul>
+            <li>Una fila de <code>consentimiento</code> refiere a una sola mascota: si el cliente trae tres mascotas, firma tres envíos. No se necesita la tabla intermedia <code>consentimiento_mascota</code>.</li>
+            <li>La imagen de firma queda en el mismo envío; no se necesita una tabla <code>firma</code> aparte en esta versión.</li>
+            <li>El servidor asigna el rol <code>CLIENTE</code> en el formulario público; nunca debe aceptar que el visitante envíe su propio rol, estado de administrador o contraseña.</li>
+            <li>La API solo permite a una persona con rol <code>ADMIN</code> consultar registros. El formulario público no puede leer consentimientos existentes.</li>
+            <li>Teléfono y correo deben recopilarse solo si son necesarios. No se marcan únicos en el modelo porque una familia puede compartirlos; decidir cómo reconocer a un cliente recurrente antes de implementar historial.</li>
+            <li>Las versiones publicadas del texto no se editan: cualquier cambio crea una nueva versión. Así se identifica qué texto aceptó cada cliente.</li>
+            <li>La fecha y hora se asignan en el servidor; el formulario público se abre tanto con QR como desde la tablet.</li>
+            <li>No se incluyen número de documento, dirección IP, agente del navegador ni datos médicos: no son necesarios para el flujo descrito.</li>
+            <li>El consentimiento enviado no se edita ni se elimina desde la aplicación; una corrección requiere un nuevo envío, según la especificación.</li>
+          </ul>
+        </section>
+      </div>
+
+      <section class="panel" aria-labelledby="next-title">
+        <h2 id="next-title">Sustento y decisiones por confirmar</h2>
+        <p>
+          Una sola tabla <code>usuario</code> evita duplicar el concepto de persona: <code>rol</code>
+          distingue cliente y administrador. El formulario crea un usuario cliente sin credenciales;
+          Pilar tiene una cuenta protegida para iniciar sesión. La mascota apunta a su dueño y cada
+          consentimiento apunta a la mascota y a la versión exacta del texto. Así el dueño firmante se
+          obtiene siguiendo la relación, sin almacenar una relación redundante que pudiera contradecirla.
+          En Nest.js, el servidor valida roles y datos; PostgreSQL los almacena y Prisma permite consultarlos.
+        </p>
+        <p>
+          Si una persona vuelve con varias mascotas, el modelo permite una persona con varias mascotas,
+          pero el MVP aún debe decidir cómo reconocer que un formulario pertenece al mismo cliente sin
+          crear duplicados. No conviene usar teléfono o correo como identificador único sin aprobar esa
+          regla, porque pueden compartirse o no estar disponibles.
+        </p>
+        <p class="note">
+          Antes de implementar, confirmar con el profesor si exige otros campos. Antes de usar datos reales,
+          definir qué contacto es obligatorio y revisar con la institución o asesoría competente el aviso
+          de privacidad, la conservación de datos y el texto legal del consentimiento. Este diagrama no es
+          una validación legal.
+        </p>
+        <p class="disclaimer">
+          Para proteger el historial, la aplicación debe tratar los consentimientos enviados y las versiones
+          publicadas como inmutables. Si más adelante se necesita PDF, correo o WhatsApp, se puede añadir
+          sin ampliar las tablas principales ahora.
+        </p>
+      </section>
+    </main>
+
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+
+      const diagram = `erDiagram
+        usuario ||--o{ mascota : registra
+        mascota ||--o{ consentimiento : identifica
+        version_consentimiento ||--o{ consentimiento : texto_aceptado
+
+        usuario {
+          UUID id PK
+          VARCHAR nombre_completo
+          VARCHAR telefono
+          VARCHAR correo
+          VARCHAR rol
+          TEXT contrasena_hash
+          BOOLEAN activo
+          TIMESTAMPTZ creado_en
+        }
+        mascota {
+          UUID id PK
+          UUID usuario_id FK
+    VARCHAR nombre
+    VARCHAR especie
+    VARCHAR raza
+    SMALLINT edad_aproximada_meses
+    TIMESTAMPTZ creado_en
+  }
+  version_consentimiento {
+    UUID id PK
+    INTEGER numero UK
+    TEXT texto
+    BOOLEAN vigente
+    TIMESTAMPTZ publicado_en
+  }
+  consentimiento {
+    UUID id PK
+    UUID mascota_id FK
+    UUID version_id FK
+    VARCHAR responsable_firmante_snapshot
+    VARCHAR telefono_firmante_snapshot
+    VARCHAR correo_firmante_snapshot
+    VARCHAR mascota_nombre_snapshot
+    VARCHAR mascota_especie_snapshot
+    VARCHAR mascota_raza_snapshot
+    BOOLEAN acepta_consentimiento
+    BYTEA firma_imagen
+    TIMESTAMPTZ firmado_en
+  }`;
+
+      const container = document.getElementById("diagram");
+      const errorMessage = document.getElementById("diagram-error");
+
+      try {
+        mermaid.initialize({
+          startOnLoad: false,
+          securityLevel: "strict",
+          theme: "base",
+          themeVariables: {
+            fontFamily: "system-ui, sans-serif",
+            fontSize: "14px",
+            primaryColor: "#1d4ed8",
+            primaryTextColor: "#ffffff",
+            primaryBorderColor: "#1e3a8a",
+            mainBkg: "#1d4ed8",
+            textColor: "#172033",
+            lineColor: "#475569",
+            entityBkg: "#ffffff",
+            entityBorder: "#1e3a8a",
+            attributeBackgroundColorOdd: "#ffffff",
+            attributeBackgroundColorEven: "#eff6ff"
+          }
+        });
+
+        const { svg } = await mermaid.render("mvp-er-diagram", diagram);
+        container.innerHTML = svg;
+      } catch (error) {
+        console.error("No se pudo representar el diagrama ER:", error);
+        errorMessage.style.display = "block";
+      }
+    </script>
+  </body>
+</html>

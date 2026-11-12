@@ -8,7 +8,7 @@ Aplicación web para que los clientes de una estética de mascotas lean y firmen
 
 ## Estado del proyecto
 
-En fase de análisis y definición de requisitos. El desarrollo aún no ha comenzado.
+Preparación del MVP. El alcance y las herramientas iniciales están descritos en [SPECS.md](./SPECS.md); la implementación aún no ha comenzado.
 
 ## El problema
 
@@ -69,25 +69,28 @@ Una aplicación web responsiva donde:
 | v4 | Nativo | App Android |
 | v5 | Escala | Agenda, clientes recurrentes |
 
-## Stack tecnológico propuesto
+## Herramientas previstas para el MVP
 
-Propuesta pendiente de validación por el equipo.
-
-- Next.js con TypeScript
-- PostgreSQL con Supabase
-- Autenticación: Supabase Auth o Auth.js
+- Next.js con TypeScript para la interfaz web
+- Nest.js con TypeScript para el backend/API
+- PostgreSQL local durante el desarrollo y Prisma para el acceso a datos
 - Firma: signature_pad
+- Estilos: Tailwind CSS
 - Validación: Zod
+- Código QR: qrcode
 - Pruebas: Vitest y Playwright
-- Despliegue: Vercel y Supabase
+
+La arquitectura y el alcance están descritos en la [ficha técnica](./FICHA-TECNICA.md) y la [especificación del MVP](./SPECS.md). El alojamiento de producción está por decidir.
 
 ## Documentación
 
-- [Ficha técnica](https://claude.ai/chat/docs/ficha-tecnica.md)
+- [Ficha técnica](./FICHA-TECNICA.md)
+- [Especificación del MVP](./SPECS.md)
+- [Diagrama ER del MVP](./diagrama-er-mvp.html)
 
 ## Instalación y ejecución
 
-Pendiente. Se completará cuando se inicie el desarrollo.
+Pendiente. Se completará al configurar el entorno de desarrollo descrito en [FICHA-TECNICA.md](./FICHA-TECNICA.md).
 
 ## Licencia
 
